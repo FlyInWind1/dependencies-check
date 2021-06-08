@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,8 @@ public class LostDependenciesFinder {
     public void setDependencyGraphUrl(URL dependencyGraphUrl) {
         this.dependencyGraphUrl = dependencyGraphUrl;
     }
+
+    private final List<String> notNeedIgnoreArtifacts = Collections.singletonList("spring-boot-jarmode-layertools");
 
     public void check(ClassLoader classLoader) throws DependencyException {
         //noinspection AlibabaUndefineMagicConstant
@@ -55,8 +58,10 @@ public class LostDependenciesFinder {
                 @SuppressWarnings("unchecked")
                 List<URL> pathList = (List<URL>) pathField.get(urlClassPath);
                 Set<String> existDependencies = pathList.stream()
-                        .map(url -> FilenameUtils.getName(url.getPath()))
-                        .filter(StringUtils::isNotBlank)
+                        .map(url -> FilenameUtils.getName(url.getPath().replaceAll("!/", "")))
+                        .filter(filename -> StringUtils.isNotBlank(filename)
+                                && filename.endsWith("jar")
+                                && !CollectionUtils.startWithContains(notNeedIgnoreArtifacts, filename))
                         .collect(Collectors.toSet());
                 Iterator<Dependency> dependencyIterator = requiredDependencies.iterator();
                 while (dependencyIterator.hasNext()) {
