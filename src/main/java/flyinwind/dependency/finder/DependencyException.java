@@ -1,6 +1,11 @@
 package flyinwind.dependency.finder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import java.util.Collection;
+import java.util.HashMap;
 
 public class DependencyException extends Exception {
 
@@ -25,9 +30,15 @@ public class DependencyException extends Exception {
 
     @Override
     public String toString() {
-        return "DependencyException{" +
-                "\ndependencyNotFond=" + dependencyNotFond +
-                "\n, dependencyNotNeed=" + dependencyNotNeed +
-                "\n}";
+        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        HashMap<String, Collection<Dependency>> msg = new HashMap<>(3);
+        msg.put("dependencyNotFond", dependencyNotFond);
+        msg.put("dependencyNotNeed", dependencyNotNeed);
+        try {
+            return objectWriter.writeValueAsString(msg);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
